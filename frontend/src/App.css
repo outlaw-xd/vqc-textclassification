@@ -1,0 +1,73 @@
+.App {
+  font-family: "Segoe UI", sans-serif;
+  text-align: center;
+  background-color: #0f172a;
+  color: #f8fafc;
+  min-height: 100vh;
+  padding: 30px;
+}
+
+h1 {
+  color: #facc15;
+}
+
+.controls {
+  margin: 20px auto;
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  resize: none;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.buttons button {
+  margin: 5px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  background-color: #facc15;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.buttons button:hover {
+  background-color: #fcd34d;
+}
+
+.metrics, .results {
+  margin-top: 30px;
+  background-color: #1e293b;
+  padding: 20px;
+  border-radius: 10px;
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  color: white;
+}
+
+th, td {
+  border: 1px solid #334155;
+  padding: 10px;
+}
+
+th {
+  background-color: #facc15;
+  color: black;
+}
