@@ -12,6 +12,8 @@ This project classifies news articles into five categories:
 
 🖥️ Technology
 
+
+
 The classification is performed using both classical machine learning and quantum machine learning, allowing a clear performance comparison between the two paradigms.
 This project Loads and preprocesses a labeled news dataset Converts text into numerical features using NLP techniques (e.g., TF-IDF) and Trains two classical models and one quantum model as:
 
@@ -20,6 +22,8 @@ Logistic Regression
 Support Vector Machine (SVM)
 
 Variational Quantum Classifier (VQC)
+
+
 
 Computes evaluation metrics:
 
