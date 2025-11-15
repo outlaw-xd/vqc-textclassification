@@ -1,92 +1,80 @@
-import os
 import time
+import traceback
 import numpy as np
 import pandas as pd
 import warnings
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
+# ML imports
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import TruncatedSVD
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-# Qiskit imports with fallbacks
-try:
-    from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
-except:
-    from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
+warnings.filterwarnings("ignore")
 
+# Try Qiskit imports (handle gracefully)
+quantum_available = True
+_qiskit_error = None
 try:
+    from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
     from qiskit_algorithms.optimizers import COBYLA
-except:
-    try:
-        from qiskit_machine_learning.optimizers import COBYLA
-    except:
-        raise ImportError("COBYLA optimizer not found.")
-
-try:
     from qiskit_aer import AerSimulator
-except:
     try:
-        from qiskit.providers.aer import AerSimulator
+        from qiskit_machine_learning.algorithms.classifiers import VQC
     except:
-        AerSimulator = None
-
-try:
-    from qiskit.utils import QuantumInstance
-except:
-    QuantumInstance = None
-
-try:
-    from qiskit_machine_learning.algorithms.classifiers import VQC
-except:
-    try:
         from qiskit_machine_learning.algorithms import VQC
-    except:
-        raise ImportError("VQC not available.")
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", category=FutureWarning)
+except Exception:
+    quantum_available = False
+    _qiskit_error = traceback.format_exc()
 
 app = Flask(__name__)
 CORS(app)
 
 # Global models
-clf = None
+log_clf = None
+svm_clf = None
 vqc = None
 vectorizer = None
 scaler = None
 svd = None
 label_encoder = None
 
+
 @app.route("/")
 def home():
-    return jsonify({"message": "Quantum News Classifier Backend Running ✅"})
+    return jsonify({"message": "Quantum + Classical News Classifier Running"})
+
 
 # ================================
-# TRAIN ROUTE WITH METRICS
+# TRAIN ROUTE
 # ================================
 @app.route("/train", methods=["POST"])
 def train_models():
-    global clf, vqc, vectorizer, scaler, svd, label_encoder
+    global log_clf, svm_clf, vqc, vectorizer, scaler, svd, label_encoder
+
+    quantum_error = None
 
     try:
-        df = pd.read_excel("news_headlines.xlsx")
+        # Load dataset
+        df = pd.read_excel("news_headlines_updated.xlsx")
         df.columns = [c.strip().lower() for c in df.columns]
 
         if "text" not in df.columns:
-            text_col = [c for c in df.columns if "headline" in c]
-            if not text_col:
-                return jsonify({"error": "No 'headline' or 'text' column found"}), 400
-            df.rename(columns={text_col[0]: "text"}, inplace=True)
+            for col in df.columns:
+                if "headline" in col:
+                    df.rename(columns={col: "text"}, inplace=True)
+                    break
 
         if "category" not in df.columns:
-            cat_col = [c for c in df.columns if "type" in c or "label" in c]
-            if not cat_col:
-                return jsonify({"error": "No 'category' column found"}), 400
-            df.rename(columns={cat_col[0]: "category"}, inplace=True)
+            for col in df.columns:
+                if "type" in col or "label" in col:
+                    df.rename(columns={col: "category"}, inplace=True)
+                    break
 
         df.dropna(subset=["text", "category"], inplace=True)
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
@@ -94,8 +82,8 @@ def train_models():
         X = df["text"]
         y = df["category"]
 
-        # Preprocessing
-        vectorizer = TfidfVectorizer(max_features=500)
+        # Improve feature quality
+        vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
         X_vec = vectorizer.fit_transform(X).toarray()
 
         label_encoder = LabelEncoder()
@@ -109,119 +97,153 @@ def train_models():
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
 
-        # Classical Model
-        clf = LogisticRegression(max_iter=1000)
-        start_time = time.time()
-        clf.fit(X_train_scaled, y_train)
-        classical_train_time = time.time() - start_time
+        # =====================
+        # 1️⃣ Logistic Regression
+        # =====================
+        log_clf = LogisticRegression(max_iter=1000, class_weight="balanced")
+        start = time.time()
+        log_clf.fit(X_train_scaled, y_train)
+        log_time = time.time() - start
 
-        y_pred_classical = clf.predict(X_test_scaled)
-        classical_acc = accuracy_score(y_test, y_pred_classical)
-        classical_report = classification_report(y_test, y_pred_classical, output_dict=True, zero_division=0)
-        classical_cm = confusion_matrix(y_test, y_pred_classical).tolist()
+        log_pred = log_clf.predict(X_test_scaled)
+        log_acc = accuracy_score(y_test, log_pred)
+        log_report = classification_report(y_test, log_pred, output_dict=True)
+        log_cm = confusion_matrix(y_test, log_pred).tolist()
 
-        # Extract metrics
-        classical_precision = classical_report["weighted avg"]["precision"]
-        classical_recall = classical_report["weighted avg"]["recall"]
-        classical_f1 = classical_report["weighted avg"]["f1-score"]
+        # =====================
+        # 2️⃣ SVM
+        # =====================
+        svm_clf = SVC(kernel="linear", probability=True, class_weight="balanced")
+        start = time.time()
+        svm_clf.fit(X_train_scaled, y_train)
+        svm_time = time.time() - start
 
-        # Quantum Model
-        svd = TruncatedSVD(n_components=3, random_state=42)
-        X_train_svd = svd.fit_transform(X_train_scaled)
-        X_test_svd = svd.transform(X_test_scaled)
+        svm_pred = svm_clf.predict(X_test_scaled)
+        svm_acc = accuracy_score(y_test, svm_pred)
+        svm_report = classification_report(y_test, svm_pred, output_dict=True)
+        svm_cm = confusion_matrix(y_test, svm_pred).tolist()
 
-        feature_dim = X_train_svd.shape[1]
-        feature_map = ZZFeatureMap(feature_dimension=feature_dim, reps=1)
-        ansatz = RealAmplitudes(num_qubits=feature_dim, reps=1)
-        optimizer = COBYLA(maxiter=50)
+        # =====================
+        # 3️⃣ Quantum VQC
+        # =====================
+        vqc_acc = None
+        vqc_report = None
+        vqc_cm = None
+        vqc_time = None
 
-        if AerSimulator is None:
-            return jsonify({"error": "AerSimulator not available. Install qiskit-aer."}), 500
+        if quantum_available:
+            try:
+                # Safe SVD size
+                n_components = min(3, X_train_scaled.shape[1])
+                svd = TruncatedSVD(n_components=n_components)
+                X_train_svd = svd.fit_transform(X_train_scaled)
+                X_test_svd = svd.transform(X_test_scaled)
 
-        backend = AerSimulator()
-        quantum_instance = QuantumInstance(backend, shots=256) if QuantumInstance else None
+                feature_dim = X_train_svd.shape[1]
+                feature_map = ZZFeatureMap(feature_dimension=feature_dim, reps=1)
+                ansatz = RealAmplitudes(num_qubits=feature_dim, reps=1)
+                optimizer = COBYLA(maxiter=30)
+                backend = AerSimulator()
 
-        vqc_kwargs = {"feature_map": feature_map, "ansatz": ansatz, "optimizer": optimizer}
-        if quantum_instance:
-            vqc_kwargs["quantum_instance"] = quantum_instance
+                try:
+                    vqc = VQC(
+                        feature_map=feature_map,
+                        ansatz=ansatz,
+                        optimizer=optimizer,
+                        quantum_instance=backend
+                    )
+                except:
+                    vqc = VQC(
+                        feature_map=feature_map,
+                        ansatz=ansatz,
+                        optimizer=optimizer,
+                    )
 
-        vqc = VQC(**vqc_kwargs)
-        start_time = time.time()
-        vqc.fit(X_train_svd, y_train)
-        quantum_train_time = time.time() - start_time
+                start = time.time()
+                vqc.fit(X_train_svd, y_train)
+                vqc_time = time.time() - start
 
-        y_pred_quantum = np.ravel(vqc.predict(X_test_svd)).astype(int)
-        quantum_acc = accuracy_score(y_test, y_pred_quantum)
-        quantum_report = classification_report(y_test, y_pred_quantum, output_dict=True, zero_division=0)
-        quantum_cm = confusion_matrix(y_test, y_pred_quantum).tolist()
+                q_pred = np.ravel(vqc.predict(X_test_svd)).astype(int)
+                vqc_acc = accuracy_score(y_test, q_pred)
+                vqc_report = classification_report(y_test, q_pred, output_dict=True)
+                vqc_cm = confusion_matrix(y_test, q_pred).tolist()
 
-        # Extract metrics
-        quantum_precision = quantum_report["weighted avg"]["precision"]
-        quantum_recall = quantum_report["weighted avg"]["recall"]
-        quantum_f1 = quantum_report["weighted avg"]["f1-score"]
+            except Exception:
+                quantum_error = traceback.format_exc()
+                vqc = None
+        else:
+            quantum_error = _qiskit_error
 
         return jsonify({
             "status": "Training complete",
             "metrics_comparison": {
-                "Classical Model": {
-                    "Accuracy": round(classical_acc, 4),
-                    "Precision": round(classical_precision, 4),
-                    "Recall": round(classical_recall, 4),
-                    "F1 Score": round(classical_f1, 4),
-                    "Train Time (s)": round(classical_train_time, 2)
+                "Logistic Regression": {
+                    "Accuracy": log_acc,
+                    "Precision": log_report["weighted avg"]["precision"],
+                    "Recall": log_report["weighted avg"]["recall"],
+                    "F1 Score": log_report["weighted avg"]["f1-score"],
+                    "Train Time (s)": log_time
                 },
-                "Quantum Model": {
-                    "Accuracy": round(quantum_acc, 4),
-                    "Precision": round(quantum_precision, 4),
-                    "Recall": round(quantum_recall, 4),
-                    "F1 Score": round(quantum_f1, 4),
-                    "Train Time (s)": round(quantum_train_time, 2)
+                "SVM": {
+                    "Accuracy": svm_acc,
+                    "Precision": svm_report["weighted avg"]["precision"],
+                    "Recall": svm_report["weighted avg"]["recall"],
+                    "F1 Score": svm_report["weighted avg"]["f1-score"],
+                    "Train Time (s)": svm_time
+                },
+                "Quantum VQC": {
+                    "Accuracy": vqc_acc,
+                    "Precision": None if not vqc_report else vqc_report["weighted avg"]["precision"],
+                    "Recall": None if not vqc_report else vqc_report["weighted avg"]["recall"],
+                    "F1 Score": None if not vqc_report else vqc_report["weighted avg"]["f1-score"],
+                    "Train Time (s)": vqc_time
                 }
             },
-            "classical_confusion_matrix": classical_cm,
-            "quantum_confusion_matrix": quantum_cm
+            "confusion_matrices": {
+                "Logistic Regression": log_cm,
+                "SVM": svm_cm,
+                "Quantum VQC": vqc_cm
+            },
+            "quantum_error": quantum_error
         })
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"error": traceback.format_exc()}), 500
+
 
 # ================================
 # PREDICT ROUTE
 # ================================
 @app.route("/predict", methods=["POST"])
 def predict_news():
-    global clf, vqc, vectorizer, scaler, svd, label_encoder
-
-    if clf is None or vqc is None:
-        return jsonify({"error": "Models not trained yet. Call /train first."}), 400
+    global log_clf, svm_clf, vqc, vectorizer, scaler, svd, label_encoder
 
     data = request.get_json()
-    if not data or "headline" not in data:
-        return jsonify({"error": "Missing 'headline' in request JSON"}), 400
+    headline = data.get("headline", "").strip()
 
-    headline = data["headline"].strip()
-    if not headline:
-        return jsonify({"error": "Empty headline provided"}), 400
-
-    # Transform input
     new_vec = vectorizer.transform([headline]).toarray()
     new_scaled = scaler.transform(new_vec)
-    new_svd = svd.transform(new_scaled)
 
-    classical_pred = clf.predict(new_scaled)[0]
-    quantum_pred = np.ravel(vqc.predict(new_svd))[0]
+    log_pred = log_clf.predict(new_scaled)[0]
+    svm_pred = svm_clf.predict(new_scaled)[0]
 
-    classical_label = label_encoder.inverse_transform([int(classical_pred)])[0]
-    quantum_label = label_encoder.inverse_transform([int(quantum_pred)])[0]
-
-    return jsonify({
+    result = {
         "headline": headline,
-        "classical_prediction": classical_label,
-        "quantum_prediction": quantum_label
-    })
+        "logistic_regression": label_encoder.inverse_transform([log_pred])[0],
+        "svm": label_encoder.inverse_transform([svm_pred])[0],
+    }
 
-# ================================
-# RUN SERVER
-# ================================
+    if vqc is not None:
+        try:
+            new_svd = svd.transform(new_scaled)
+            q_pred = np.ravel(vqc.predict(new_svd))[0]
+            result["quantum_vqc"] = label_encoder.inverse_transform([q_pred])[0]
+        except:
+            result["quantum_vqc"] = "Quantum prediction failed"
+
+    return jsonify(result)
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
+
