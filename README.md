@@ -58,14 +58,14 @@ frontend/ → React UI to display results and graphs
 
 🖥️ Backend Setup (ML + Quantum VQC)
 
-1️⃣ Navigate to the backend folder
-cd backend
+1️⃣ Navigate to the backend folder - 
+"cd backend"
 
-2️⃣ Install backend dependencies
-pip install
+2️⃣ Install backend dependencies - 
+"pip install"
 
-3️⃣ Start backend server
-python app.py
+3️⃣ Start backend server - 
+"python app.py"
 
 
 ✔ Backend runs on:
@@ -75,14 +75,14 @@ http://127.0.0.1:5000
 
 🌐 Frontend Setup (React Interface)
 
-1️⃣ Navigate to the frontend folder
-cd frontend
+1️⃣ Navigate to the frontend folder - 
+"cd frontend"
 
-2️⃣ Install frontend dependencies
-npm install
+2️⃣ Install frontend dependencies - 
+"npm install"
 
-3️⃣ Start the frontend
-npm start
+3️⃣ Start the frontend - 
+"npm start"
 
 ✔ Frontend runs on:
 http://localhost:3000
