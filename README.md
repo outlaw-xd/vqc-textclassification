@@ -54,6 +54,7 @@ Output :
 The project has two main components:
 
 backend/ → Runs ML models, quantum VQC, predictions, and metrics
+
 frontend/ → React UI to display results and graphs
 
 🖥️ Backend Setup (ML + Quantum VQC)
