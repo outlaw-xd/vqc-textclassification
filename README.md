@@ -3,28 +3,40 @@
 This project classifies news articles into five categories:
 
 🎭 Entertainment
+
 🏅 Sports
+
 🏛️ Politics
+
 💼 Business
+
 🖥️ Technology
 
 The classification is performed using both classical machine learning and quantum machine learning, allowing a clear performance comparison between the two paradigms.
 This project Loads and preprocesses a labeled news dataset Converts text into numerical features using NLP techniques (e.g., TF-IDF) and Trains two classical models and one quantum model as:
 
 Logistic Regression
+
 Support Vector Machine (SVM)
+
 Variational Quantum Classifier (VQC)
 
 Computes evaluation metrics:
 
 Accuracy
+
 Precision
+
 Recall
+
 F1-Score
+
 Training Time
 
 Output :
+
 Evalution Matrix
+
 News Headline Category classification
 
 🚀 How to Run the Project
@@ -40,17 +52,14 @@ frontend/ → React UI to display results and graphs
 cd backend
 
 2️⃣ Install backend dependencies
-npm install
+pip install
 
 3️⃣ Start backend server
-npm start
+python app.py
 
-or
-
-npm run dev
 
 ✔ Backend runs on:
-http://localhost:5000
+http://127.0.0.1:5000
 
 
 
