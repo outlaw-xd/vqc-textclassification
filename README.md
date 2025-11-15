@@ -12,6 +12,7 @@ This project classifies news articles into five categories:
 
 🖥️ Technology
 
+---
 
 
 The classification is performed using both classical machine learning and quantum machine learning, allowing a clear performance comparison between the two paradigms.
@@ -23,6 +24,7 @@ Support Vector Machine (SVM)
 
 Variational Quantum Classifier (VQC)
 
+---
 
 
 Computes evaluation metrics:
@@ -37,11 +39,15 @@ F1-Score
 
 Training Time
 
+---
+
 Output :
 
 Evalution Matrix
 
 News Headline Category classification
+
+---
 
 🚀 How to Run the Project
 
@@ -65,7 +71,7 @@ python app.py
 ✔ Backend runs on:
 http://127.0.0.1:5000
 
-
+---
 
 🌐 Frontend Setup (React Interface)
 
