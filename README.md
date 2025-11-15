@@ -1,96 +1,67 @@
-📊 ML vs Quantum ML – Model Comparison Project
+📰 Text Classification Using Classical ML & Quantum VQC
 
-This project compares the performance of classical machine learning models — Logistic Regression and SVM — with a Quantum Variational Quantum Classifier (VQC).
-The goal is to visualize how quantum machine learning performs against traditional ML methods using standard evaluation metrics.
+This project classifies news articles into five categories:
 
-The project generates:
+🎭 Entertainment
+🏅 Sports
+🏛️ Politics
+💼 Business
+🖥️ Technology
 
-📈 Accuracy comparison
-
-📈 Precision comparison
-
-📈 Recall comparison
-
-📊 Bar graph visualization (scaled to 1)
-
-🧪 A clear comparison between classical ML and Quantum ML models
-
-🔍 What This Project Does
-
-This project:
-
-Loads and preprocesses the dataset
-
-Trains three models:
+The classification is performed using both classical machine learning and quantum machine learning, allowing a clear performance comparison between the two paradigms.
+This project Loads and preprocesses a labeled news dataset Converts text into numerical features using NLP techniques (e.g., TF-IDF) and Trains two classical models and one quantum model as:
 
 Logistic Regression
-
 Support Vector Machine (SVM)
+Variational Quantum Classifier (VQC)
 
-Quantum VQC
-
-Computes metrics:
+Computes evaluation metrics:
 
 Accuracy
-
 Precision
-
 Recall
+F1-Score
+Training Time
 
-Generates a bar graph comparing all three models
-
-Shows how classical ML models outperform quantum VQC on this dataset
-
-📊 What This Project Shows (Results)
-Metric	Logistic Regression	SVM	Quantum VQC
-Accuracy	0.87	0.85	0.195
-Precision	0.8732	0.8514	0.0741
-Recall	0.87	0.85	0.195
-Quick Summary
-
-Classical ML models (Logistic Regression and SVM) achieve high and consistent performance.
-
-The Quantum VQC performs significantly worse due to quantum circuit limitations, noise, and depth constraints.
-
-The bar graph provides a clear visual comparison between the three models.
+Output :
+Evalution Matrix
+News Headline Category classification
 
 🚀 How to Run the Project
 
-This project contains two main parts:
+The project has two main components:
 
-backend/ → Runs all model training, evaluation, and graph generation
+backend/ → Runs ML models, quantum VQC, predictions, and metrics
+frontend/ → React UI to display results and graphs
 
-frontend/ → Displays results (if applicable) or serves UI components
-
-Follow these steps:
-
-🖥️ Backend Setup (Machine Learning & Quantum ML Code)
-1️⃣ Navigate to backend folder
+🖥️ Backend Setup (ML + Quantum VQC)
+1️⃣ Navigate to the backend folder
 cd backend
 
-2️⃣ Install dependencies
+2️⃣ Install backend dependencies
 npm install
 
-3️⃣ Start the backend
+3️⃣ Start backend server
 npm start
 
-
-or (if using nodemon)
+or
 
 npm run dev
 
-✔️ Backend runs at:
+✔ Backend runs on:
 http://localhost:5000
 
-🌐 Frontend Setup (React App)
-1️⃣ Navigate to frontend folder
+
+
+🌐 Frontend Setup (React Interface)
+1️⃣ Navigate to the frontend folder
 cd frontend
 
-2️⃣ Install dependencies
+2️⃣ Install frontend dependencies
 npm install
 
 3️⃣ Start the frontend
 npm start
 
-✔️ Frontend runs at:
+✔ Frontend runs on:
 http://localhost:3000
