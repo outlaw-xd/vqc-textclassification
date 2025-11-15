@@ -35,6 +35,7 @@ backend/ → Runs ML models, quantum VQC, predictions, and metrics
 frontend/ → React UI to display results and graphs
 
 🖥️ Backend Setup (ML + Quantum VQC)
+
 1️⃣ Navigate to the backend folder
 cd backend
 
@@ -54,6 +55,7 @@ http://localhost:5000
 
 
 🌐 Frontend Setup (React Interface)
+
 1️⃣ Navigate to the frontend folder
 cd frontend
 
