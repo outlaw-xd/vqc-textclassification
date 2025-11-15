@@ -29,23 +29,23 @@ Variational Quantum Classifier (VQC)
 
 Computes evaluation metrics:
 
-Accuracy
+1️⃣ Accuracy
 
-Precision
+2️⃣ Precision
 
-Recall
+3️⃣ Recall
 
-F1-Score
+4️⃣ F1-Score
 
-Training Time
+5️⃣ Training Time
 
 ---
 
 Output :
 
-Evalution Matrix
+🧮 Evalution Matrix
 
-News Headline Category classification
+📰 News Headline Category classification
 
 ---
 
